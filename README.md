@@ -1,6 +1,8 @@
-# Khai_pha_van_ban — Phân loại spam/ham bình luận SV PTIT
+# Khai_pha_van_ban — Phân loại bình luận toxic / vô hại của SV PTIT
 
-Đề tài: **Phân loại spam/ham các bình luận của SV PTIT** (chung đề tài với môn Học máy — xem repo `Hoc_may`).
+Đề tài: **Phân loại bình luận toxic / vô hại (toxic - vô hại) của SV PTIT** (chung đề tài với môn Học máy — xem repo `Hoc_may`).
+
+> Lượt chạy 1 (2/11 sáng) dùng quy ước proxy spam/ham từ ViSFD+ViHSD — kết quả cũ trong `ketqua.md`. Từ lượt 2 chuyển hẳn sang bài toán toxic/vô hại.
 
 ## Cấu trúc
 
