@@ -2,8 +2,9 @@
 """Baseline: TF-IDF (word 1-2gram + char 2-5gram) -> NB / LogReg / LinearSVC.
 
 Dùng:
-    python src/train_baseline.py --data data/raw/visfd.csv data/raw/vihsd.csv \
-        --text-col comment --label-col label --mapping visfd
+    python src/train_baseline.py --data "data/raw/*.csv" --text-col text --label-col label --mapping auto
+`--mapping auto` tự nhận diện schema nhãn từng file (ViSFD aspect/chữ, ViHSD số/chữ),
+nên trộn nhiều bộ dữ liệu khác format trong cùng 1 thư mục vẫn chạy được.
 Không có --data thì chạy với dữ liệu mẫu trong sample_data/.
 """
 import argparse

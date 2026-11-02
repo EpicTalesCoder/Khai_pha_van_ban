@@ -2,8 +2,7 @@
 """(Điểm cộng) Fine-tune PhoBERT cho spam/ham — chạy tốt nhất trên GPU Colab.
 
 Dùng:
-    python src/train_phobert.py --data data/raw/a.csv data/raw/b.csv \
-        --text-col comment --label-col label --mapping visfd
+    python src/train_phobert.py --data "data/raw/*.csv" --text-col text --label-col label --mapping auto
 """
 import argparse
 import os
