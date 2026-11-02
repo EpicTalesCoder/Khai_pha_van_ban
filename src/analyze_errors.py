@@ -49,10 +49,11 @@ def main():
     print(f"[errors] confusion matrix -> {args.out}/confusion_matrix.png")
 
     # Các bình luận bị nhầm (kèm độ tin cậy nếu model hỗ trợ)
-    wrong = pd.DataFrame({"text": X_te, "thuc_te": y_te, "du_doan": y_pred})
+    wrong = pd.DataFrame({"text": X_te, "thuc_te": y_te, "du_doan": y_pred}).reset_index(drop=True)
     wrong = wrong[wrong["thuc_te"] != wrong["du_doan"]]
     if hasattr(model, "predict_proba"):
         proba = model.predict_proba(X_te).max(axis=1)
+        # proba tính trên X_te nguyên thứ tự; sau reset_index, index == vị trí trong X_te
         wrong = wrong.assign(confidence=proba[wrong.index])
     print(f"\n[errors] {len(wrong)} bình luận bị nhầm (20 dòng đầu):")
     print(wrong.head(20).to_string(max_colwidth=80))
