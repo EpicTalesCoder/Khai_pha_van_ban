@@ -24,8 +24,8 @@ import re
 import pandas as pd
 
 # Cột văn bản/nhãn hay gặp — load_csv tự "sniff" nếu cột chỉ định không tồn tại
-TEXT_CANDIDATES = ("comment", "cmt_col", "text", "sentence")
-LABEL_CANDIDATES = ("label", "labels", "sentiment")
+TEXT_CANDIDATES = ("comment", "cmt_col", "text", "sentence", "content")
+LABEL_CANDIDATES = ("label", "labels", "sentiment", "Toxicity")
 
 
 def _map_visfd(raw: str):
@@ -52,6 +52,11 @@ def _map_vihsd(raw: str):
     return num.get(s) or {"clean": "ham", "hate": "spam", "offensive": "spam"}.get(s)
 
 
+def _map_victsd(raw: str):
+    """ViCTSD (df_*_clean): cột Toxicity 0/1 — 0=không độc hại (vô hại), 1=độc hại (toxic)."""
+    s = str(raw).strip().lower()
+    return {"0": "vohai", "0.0": "vohai", "1": "toxic", "1.0": "toxic"}.get(s)
+
 def _map_identity(raw: str):
     s = str(raw).strip().lower()
     return s if s in ("spam", "ham") else None
@@ -63,6 +68,9 @@ def _auto_mapper(raw_series: pd.Series):
     if any("#" in v for v in vals) or vals & {"positive", "negative", "neutral"}:
         return _map_visfd, "visfd"
     if vals & {"0", "0.0", "1", "1.0", "2", "2.0", "clean", "hate", "offensive"}:
+        # 0/1 thuần (không có 2) = ViCTSD Toxicity; có 2 = ViHSD
+        if vals <= {"0", "0.0", "1", "1.0", ""}:
+            return _map_victsd, "victsd"
         return _map_vihsd, "vihsd"
     if vals & {"spam", "ham"}:
         return _map_identity, "spam/ham"
@@ -78,6 +86,8 @@ LABEL_MAPS = {
     "visfd": _map_visfd,
     # ViHSD (nhãn tiếng Việt hoặc số)
     "vihsd": _map_vihsd,
+    # ViCTSD (Toxicity 0/1)
+    "victsd": _map_victsd,
 }
 
 
