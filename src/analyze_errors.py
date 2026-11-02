@@ -41,7 +41,8 @@ def main():
     labels = sorted(df["label"].unique())
     cm = confusion_matrix(y_te, y_pred, labels=labels)
     plt.figure(figsize=(5, 4))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Greens",  # mq thích xanh lá, xticklabels=labels, yticklabels=labels)
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Greens",
+                xticklabels=labels, yticklabels=labels)
     plt.xlabel("Dự đoán"); plt.ylabel("Thực tế")
     plt.tight_layout()
     plt.savefig(f"{args.out}/confusion_matrix.png", dpi=150)
