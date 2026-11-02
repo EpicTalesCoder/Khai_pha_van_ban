@@ -63,8 +63,10 @@ def main():
         clf = model.named_steps["clf"]
         names = model.named_steps["tfidf"].get_feature_names_out()
         if hasattr(clf, "coef_"):
-            for i, cls in enumerate(clf.classes_):
-                top = names[clf.coef_[i].argsort()[-10:][::-1]]
+            coefs = clf.coef_ if clf.coef_.ndim == 2 and clf.coef_.shape[0] > 1 else [clf.coef_[0]]
+            classes = clf.classes_ if len(coefs) > 1 else [f"'{clf.classes_[1]}' (đối lập '{clf.classes_[0]}')"]
+            for i, cls in enumerate(classes):
+                top = names[coefs[i].argsort()[-10:][::-1]]
                 print(f"\n[top-10 '{cls}'] {', '.join(top)}")
     except (AttributeError, KeyError):
         print("[errors] model hiện tại không xem được coef, bỏ qua top-features")

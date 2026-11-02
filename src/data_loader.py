@@ -13,9 +13,10 @@ Nhãn gốc lộn xộn giữa các bản copy trên Kaggle/GitHub:
 → `--mapping auto` tự nhận diện theo GIÁ TRỊ nhãn của từng file, nên trộn
   nhiều bộ dữ liệu khác schema vào cùng 1 thư mục vẫn chạy được.
 
-Quy ước đề tài: positive/clean → ham; negative/hate/offensive → spam.
-Nhãn mixed (vừa positive vừa negative trong 1 dòng), neutral hoặc không
-nhận diện được → bỏ dòng (có in số dòng bị bỏ).
+Quy ước đề tài (toxic/vô hại): mọi nhãn nguồn được gộp về 2 lớp
+`vohai` (positive/clean/Toxicity=0) và `toxic` (negative/hate/offensive/
+Toxicity=1). Nhãn mixed (vừa positive vừa negative trong 1 dòng), neutral
+hoặc không nhận diện được → bỏ dòng (có in số dòng bị bỏ).
 """
 import glob
 import os
@@ -26,6 +27,10 @@ import pandas as pd
 # Cột văn bản/nhãn hay gặp — load_csv tự "sniff" nếu cột chỉ định không tồn tại
 TEXT_CANDIDATES = ("comment", "cmt_col", "text", "sentence", "content")
 LABEL_CANDIDATES = ("label", "labels", "sentiment", "Toxicity")
+
+# Đề tài toxic/vô hại: mọi nhãn nguồn gộp về 2 lớp thống nhất.
+# ham/sạch/tích cực/không độc hại -> vohai; spam/hate/offensive/độc hại -> toxic
+BINARY_LABEL_MAP = {"ham": "vohai", "spam": "toxic", "vohai": "vohai", "toxic": "toxic"}
 
 
 def _map_visfd(raw: str):
@@ -127,6 +132,9 @@ def load_csv(path: str, text_col: str = "text", label_col: str = "label",
         dropped = int(out["label"].isna().sum())
         if dropped:
             print(f"[data_loader] {os.path.basename(path)}: bỏ {dropped}/{len(out)} dòng nhãn không map được")
+
+    # Gộp về 2 lớp đề tài toxic/vô hại (ham->vohai, spam->toxic)
+    out["label"] = out["label"].map(lambda x: BINARY_LABEL_MAP.get(x, x))
 
     return (out.dropna(subset=["label"])
                .drop_duplicates(subset="text")
