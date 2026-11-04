@@ -1,7 +1,7 @@
 # Báo cáo: Phân loại bình luận toxic / vô hại của sinh viên PTIT
 
 **Môn:** Khai phá dữ liệu — Đề tài: Phân loại bình luận toxic / vô hại của SV PTIT
-**Phiên bản:** baocao_v1.md (sửa lần 1 — 02/11/2026, thay bản 4 lớp bị lạc đề)
+**Phiên bản:** baocao_v1.md (sửa lần 2 — 04/11/2026, bổ sung số PhoBERT chính thức từ kernel v2)
 **Môi trường chạy:** Kaggle Notebook GPU, kernel `mq3444/kpvb-train-toxic` (chạy headless). Toàn bộ số liệu dưới đây lấy từ log kernel và file output (`ketqua.md`, `baseline_scores.csv`, `confusion_matrix.png`).
 
 ---
@@ -62,35 +62,40 @@ Chia dữ liệu: **85% train / 15% hold-out test**, stratified, `random_state=4
 
 ## 4. Kết quả
 
-### 4.1 Baseline — CV5 trên tập train (f1_macro)
+### 4.1 Baseline — CV5 trên tập train (f1_macro, từ log kernel v2)
 
 | Model | f1_macro CV5 |
 |---|---|
-| Naive Bayes | 0.7758 |
-| LogisticRegression | 0.8427 |
-| LinearSVC | **0.8432** ← chọn |
+| Naive Bayes | 0.7757 |
+| LogisticRegression | 0.8432 |
+| LinearSVC | **0.8436** ← chọn |
 
-### 4.2 Hold-out test 15% (2.503 mẫu, 2 lớp)
+### 4.2 Hold-out test 15% (2.503 mẫu, 2 lớp — từ log kernel v2)
 
 | Model | Accuracy | f1_macro | f1 toxic | f1 vô hại |
 |---|---|---|---|---|
 | LinearSVC (best baseline) | 0.879 | 0.853 | 0.791 | 0.915 |
-| Voting ensemble | **0.882** | **0.855** | 0.792 | 0.917 |
+| Voting ensemble | 0.882 | 0.855 | 0.792 | 0.918 |
+| PhoBERT (best epoch 3) | **0.885** | **0.8565** | 0.792 | 0.921 |
 
-### 4.3 PhoBERT — chờ số chính thức
+PhoBERT precision/recall lớp toxic: 0.842 / 0.748 — recall toxic thấp hơn baseline (bỏ sót nhiều hơn) nhưng precision cao hơn hẳn (ít quy nhầm bình luận lành hơn).
 
-Lần chạy 2 lớp đang thực thi trên Kaggle (kernel version 2, push 16:10). Số lần chạy 2 lớp đầu tiên trên thiết kế 4 lớp cũ (eval f1 0.597→0.653→0.662) không còn tương ứng nên KHÔNG đưa vào đây thay số — chỗ này sẽ được cập nhật khi kernel xong, không ước lượng.
+### 4.3 PhoBERT — số chính thức (kernel v2, chạy xong 02/11)
 
-### 4.4 Confusion matrix (LinearSVC, hàng = thực tế, cột = dự đoán — từ chạy kiểm chứng cùng thiết lập trên máy)
+Kernel version 2 (push ~16:10 ngày 02/11) đã chạy COMPLETE. Diễn biến eval_f1 theo epoch: **0.835 → 0.8538 → 0.8565** — chọn model epoch 3 (load_best_model_at_end). Kết quả trên hold-out test 15%: accuracy 0.885, f1_macro 0.8565, f1 toxic 0.792, f1 vô hại 0.921 (chi tiết ở bảng 4.2).
+
+Lưu ý: như mục 6.1, eval_f1 khi train tính trên chính tập test nên dãy 0.835→0.8565 không phải số selection sạch; số hold-out nêu trên vẫn là dự đoán của model tốt nhất trên test nhưng cần đọc kèm lưu ý đó.
+
+### 4.4 Confusion matrix (LinearSVC, hàng = thực tế, cột = dự đoán)
 
 | | toxic | vô hại |
 |---|---|---|
 | **toxic** | 572 | 159 |
 | **vô hại** | 143 | 1629 |
 
-Recall toxic = 572/731 = **0.782** — bắt được ~78% bình luận độc hại; precision toxic = 0.800 (143 bình luận lành bị quy nhầm).
+Số liệu khớp với classification report của kernel v2 trong log (recall toxic 0.782, recall vô hại 0.919, accuracy 0.879). Recall toxic = 572/731 = **0.782** — bắt được ~78% bình luận độc hại; precision toxic = 0.800 (143 bình luận lành bị quy nhầm).
 
-### 4.5 Top-10 từ khóa mạnh nhất lớp toxic (từ analyze_errors)
+### 4.5 Top-10 từ khóa mạnh nhất lớp toxic (từ analyze_errors — đã chạy trên kernel v2)
 
 `cha mẹ, đồng bọn, thì ra, làm xấu, bọn tao, như mày, khủng khiếp, chó nó, cá…` — chủ yếu là đại từ miệt thị/chửi thề đặc trưng của hate speech tiếng Việt, nhất quán với trực giác.
 
@@ -103,20 +108,20 @@ Recall toxic = 572/731 = **0.782** — bắt được ~78% bình luận độc h
 
 ## 6. Thiếu xót & hạn chế (trung thực)
 
-1. **[Đánh giá] eval_f1 của PhoBERT tính trên chính tập test** (eval_dataset = te_ds trong Trainer), tức model "nhìn" test 3 lần trong lúc chọn epoch — vi phạm nguyên tắc test chỉ chạm một lần. Cần tách dev set từ train để selection/early-stopping. Do đó số PhoBERT ở mục 4.3 được giữ trống chờ chạy lại đúng quy trình.
+1. **[Đánh giá] eval_f1 của PhoBERT tính trên chính tập test** (eval_dataset = te_ds trong Trainer), tức model "nhìn" test 3 lần trong lúc chọn epoch — vi phạm nguyên tắc test chỉ chạm một lần. Cần tách dev set từ train để selection/early-stopping. Số PhoBERT ở mục 4.3 được ghi kèm lưu ý này; muốn số hoàn toàn sạch cần tách dev set và chạy lại.
 2. **[Dữ liệu] Không phải bình luận SV PTIT thật.** ViCTSD là bình luận báo chí điện tử, ViHSD là bình luận mạng xã hội. Kết quả chỉ mô phỏng; khi áp vào bình luận nhóm/fanpage SV PTIT (teencode, viết tắt nặng hơn) hiệu năng có thể giảm.
 3. **[Dữ liệu] Lệch lớp còn lại:** toxic chiếm 29,2%, đã dùng class_weight nhưng chưa thử oversample/threshold tuning — có thể cải thiện recall toxic nếu đổi ngưỡng quyết định.
 4. **[Dữ liệu] Chưa kiểm tra near-duplicate chéo nguồn** (chỉ dedupe text y hệt); ViCTSD và ViHSD có thể có câu gần trùng nằm cả 2 tập.
 5. **[Dữ liệu] Hai nhãn nguồn không đồng đều về ngữ nghĩa:** "toxic" của ViCTSD (bình luận báo chí, mức nhẹ hơn) và "hate/offensive" của ViHSD (mạng xã hội, nặng hơn) được gộp chung một lớp — ranh giới lớp không hoàn toàn nhất quán giữa 2 nguồn.
 6. **[Phạm vi] "Vô hại" ≠ "constructive".** ViCTSD còn có nhãn Constructiveness (0/1) mà pipeline không dùng; tận dụng có thể tách 3 mức: constructive / vô hại / toxic.
-7. **[Pipeline] analyze_errors.py đã fix 2 lỗi** (IndexError confidence; top-features cho coef_ nhị phân) và kiểm chứng chạy được trên máy, nhưng lần chạy kernel 2 lớp đang thực thi chưa có kết quả — số mục 4.3/4.4 hiện là số kiểm chứng máy, sẽ được thay bằng số kernel khi xong.
+7. **[Pipeline] analyze_errors.py đã fix 2 lỗi** (IndexError confidence; top-features cho coef_ nhị phân) và **đã chạy hoàn chỉnh trên kernel v2** — danh sách mẫu nhầm, top-10 từ khóa (mục 4.4/4.5) giờ lấy trực tiếp từ log kernel, không còn là số kiểm chứng máy.
 
 ## 7. Hướng phát triển
 
-- **Ngắn hạn:** cập nhật số PhoBERT 2 lớp chính thức (kernel v2 đang chạy); chạy lại analyze_errors trên kernel; thử threshold tuning để tăng recall toxic.
+- **Ngắn hạn:** [đã xong] số PhoBERT 2 lớp chính thức + analyze_errors trên kernel v2 đã cập nhật vào báo cáo; còn lại: tách dev set để selection PhoBERT sạch, thử threshold tuning để tăng recall toxic.
 - **Trung hạn:** ensemble PhoBERT + TF-IDF; oversample cho lớp toxic; xử lý teencode/emoji đặc trưng bình luận SV.
 - **Dài hạn:** xin quyền bộ PTIT gated hoặc crawl bình luận nhóm SV PTIT (đúng môi trường đích); mở rộng 3 lớp constructive / vô hại / toxic dùng nhãn Constructiveness của ViCTSD.
 
 ## 8. Kết luận
 
-Pipeline 2 dataset → gộp nhãn 2 lớp → TF-IDF baseline + PhoBERT hoạt động trọn vẹn headless trên Kaggle GPU. Kết quả tốt nhất hiện tại: **Voting ensemble — accuracy 0.882, f1_macro 0.855** (LinearSVC đơn lẻ tương đương 0.879/0.853), recall lớp toxic 0.782. Các thiếu xót chính đã liệt kê trung thực kèm hướng sửa cụ thể; bản chạy kernel v2 (đang thực thi) sẽ bổ sung số PhoBERT chính thức và phân tích lỗi hoàn chỉnh.
+Pipeline 2 dataset → gộp nhãn 2 lớp → TF-IDF baseline + PhoBERT hoạt động trọn vẹn headless trên Kaggle GPU. Kết quả tốt nhất hiện tại: **PhoBERT — accuracy 0.885, f1_macro 0.8565** (dự đoán test, xem lưu ý eval-on-test ở mục 6.1); trong nhóm baseline, Voting ensemble đạt 0.882/0.855 và LinearSVC đơn lẻ 0.879/0.853 — chênh nhau không đáng kể, chọn LinearSVC là hợp lý về chi phí. Recall lớp toxic 0.782 (LinearSVC) / 0.748 (PhoBERT, đổi lại precision cao hơn). Các thiếu xót chính đã liệt kê trung thực kèm hướng sửa cụ thể.
