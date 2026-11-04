@@ -75,12 +75,12 @@ Chia dữ liệu: **85% train / 15% hold-out test**, stratified, `random_state=4
 | Model | Accuracy | f1_macro | f1 toxic | f1 vô hại |
 |---|---|---|---|---|
 | LinearSVC (best baseline) | 0.879 | 0.853 | 0.791 | 0.915 |
-| Voting ensemble | 0.882 | 0.855 | 0.792 | 0.918 |
-| PhoBERT (best epoch 3) | **0.885** | **0.8565** | 0.792 | 0.921 |
+| Voting ensemble | **0.882** | **0.855** | 0.792 | 0.918 |
+| PhoBERT (best epoch 3)* | 0.885 | 0.8565 | 0.792 | 0.921 |
 
-PhoBERT precision/recall lớp toxic: 0.842 / 0.748 — recall toxic thấp hơn baseline (bỏ sót nhiều hơn) nhưng precision cao hơn hẳn (ít quy nhầm bình luận lành hơn).
+PhoBERT precision/recall lớp toxic: 0.842 / 0.748 — recall toxic thấp hơn baseline (bỏ sót nhiều hơn) nhưng precision cao hơn hẳn (ít quy nhầm bình luận lành hơn). (*) Số PhoBERT chỉ để tham khảo/thể hiện điểm cộng (mục 3.2), mô hình **chính của đề tài là nhóm TF-IDF baseline** — xem lựa chọn ở mục 4.1 và kết luận.
 
-### 4.3 PhoBERT — số chính thức (kernel v2, chạy xong 02/11)
+### 4.3 PhoBERT — số chính thức (kernel v2, chạy xong 02/11) — chỉ để tham khảo (điểm cộng)
 
 Kernel version 2 (push ~16:10 ngày 02/11) đã chạy COMPLETE. Diễn biến eval_f1 theo epoch: **0.835 → 0.8538 → 0.8565** — chọn model epoch 3 (load_best_model_at_end). Kết quả trên hold-out test 15%: accuracy 0.885, f1_macro 0.8565, f1 toxic 0.792, f1 vô hại 0.921 (chi tiết ở bảng 4.2).
 
@@ -124,4 +124,4 @@ Số liệu khớp với classification report của kernel v2 trong log (recall
 
 ## 8. Kết luận
 
-Pipeline 2 dataset → gộp nhãn 2 lớp → TF-IDF baseline + PhoBERT hoạt động trọn vẹn headless trên Kaggle GPU. Kết quả tốt nhất hiện tại: **PhoBERT — accuracy 0.885, f1_macro 0.8565** (dự đoán test, xem lưu ý eval-on-test ở mục 6.1); trong nhóm baseline, Voting ensemble đạt 0.882/0.855 và LinearSVC đơn lẻ 0.879/0.853 — chênh nhau không đáng kể, chọn LinearSVC là hợp lý về chi phí. Recall lớp toxic 0.782 (LinearSVC) / 0.748 (PhoBERT, đổi lại precision cao hơn). Các thiếu xót chính đã liệt kê trung thực kèm hướng sửa cụ thể.
+Pipeline 2 dataset → gộp nhãn 2 lớp → TF-IDF baseline + PhoBERT hoạt động trọn vẹn headless trên Kaggle GPU. Kết quả chính của đề tài: **Voting ensemble — accuracy 0.882, f1_macro 0.855** (LinearSVC đơn lẻ tương đương 0.879/0.853, CV5 0.8436) — recall lớp toxic 0.782. PhoBERT fine-tune được thực hiện thêm như điểm cộng (kiến thức ngoài chương trình, mục 3.2) đạt 0.885/0.8565, nhưng không dùng làm mô hình chính. Các thiếu xót chính đã liệt kê trung thực kèm hướng sửa cụ thể.
